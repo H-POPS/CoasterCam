@@ -122,43 +122,11 @@ namespace CoasterCam
             _origCam.SetActive(false);
 
             _coasterCam.tag = tag;
+            DestroyImmediate(_coasterCam.GetComponent<Camera>());
             DestroyImmediate(_coasterCam.GetComponent<CameraController>());
+            _coasterCam.AddComponent<Camera>();
 
-            GameObject go = new GameObject();
-            Camera cam2 = go.AddComponent<Camera>();
-
-            Camera cam = _coasterCam.GetComponent<Camera>();
-
-            /**
-            * Ugliest code of all time, but hey, it works!
-            */
-            cam.aspect = cam2.aspect;
-            cam.backgroundColor = cam2.backgroundColor;
-            cam.clearFlags = cam2.clearFlags;
-            cam.clearStencilAfterLightingPass = cam2.clearStencilAfterLightingPass;
-            //cam.cullingMask = cam2.cullingMask;
-            cam.depth = cam2.depth;
-            cam.depthTextureMode = cam2.depthTextureMode;
-            //cam.farClipPlane = cam2.farClipPlane;
-            cam.fieldOfView = cam2.fieldOfView;
-            cam.allowHDR = cam2.allowHDR;
-            cam.layerCullDistances = cam2.layerCullDistances;
-            cam.layerCullSpherical = cam2.layerCullSpherical;
-            cam.pixelRect = cam2.pixelRect;
-            cam.projectionMatrix = cam2.projectionMatrix;
-            cam.rect = cam2.rect;
-            cam.renderingPath = cam2.renderingPath;
-            cam.stereoConvergence = cam2.stereoConvergence;
-            cam.stereoSeparation = cam2.stereoSeparation;
-            cam.targetDisplay = cam2.targetDisplay;
-            cam.targetTexture = cam2.targetTexture;
-            cam.transparencySortMode = cam2.transparencySortMode;
-            cam.useOcclusionCulling = cam2.useOcclusionCulling;
-
-
-            DestroyImmediate(go);
-
-            CullingGroupManager.Instance.setTargetCamera(_coasterCam.GetComponent<Camera>());
+			CullingGroupManager.Instance.setTargetCamera(_coasterCam.GetComponent<Camera>());
 			_coasterCam.GetComponent<Camera>().nearClipPlane = 0.05f;
             _coasterCam.GetComponent<Camera>().farClipPlane = 100f;
             _coasterCam.GetComponent<Camera>().depthTextureMode = DepthTextureMode.DepthNormals;

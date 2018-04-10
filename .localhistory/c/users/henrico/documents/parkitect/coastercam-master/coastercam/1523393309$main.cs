@@ -6,13 +6,9 @@ namespace CoasterCam
     {
         private static GameObject go;
 
-        public Main()
-        {
-            SetupKeyBinding();
-        }
-
         public void onEnabled()
         {
+            SetupKeyBinding();
 
             go = new GameObject(Identifier);
 
