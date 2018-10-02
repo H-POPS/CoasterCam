@@ -7,14 +7,17 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <!-- Used as AssemblyName -->
-    <Identifier>ParkitectNexus@CoasterCam</Identifier>
-    <!-- used as AssemblyTitle and AssemblyProduct -->
+    <!-- Used as identifier in parkitect (-> IMod.Identifier) -->
+    <Identifier>H-POPS@CoasterCam</Identifier>
+    <!-- Used as name in parkitect(-> IMod.Name) and as AssemblyTitle and AssemblyProduct-->
     <Name>CoasterCam</Name>
-    <!-- Used as AssemblyDescription -->
+    <!-- Used as description in parkitect (-> IMod.Description) and as AssemblyDescription -->
     <Description>Camera for riding coasters</Description>
+
+    <!-- dll name -->
+    <AssemblyName>ParkitectNexus@CoasterCam</AssemblyName>
     <!-- Output folder name in $(ModDir) -->
-    <FolderName>$(Identifier)</FolderName>
+    <FolderName>$(AssemblyName)</FolderName>
 
     <!-- AssemblyCopyright -->
     <Copyright>Copyright © ParkitectNexus 2015</Copyright>
@@ -215,10 +218,16 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Source: https://stuartlang.uk/adding-assemblymetadataattribute-using-new-sdk-project-with-msbuild/ -->
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>Identifier</_Parameter1>
+      <_Parameter2>$(Identifier)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
   <PropertyGroup>
     <ModDir>$(ParkitectUserPath)\Mods\$(FolderName)</ModDir>
 
-    <AssemblyName>$(Identifier)</AssemblyName>
     <AssemblyTitle>$(Name)</AssemblyTitle>
     <Product>$(Name)</Product>
   </PropertyGroup>

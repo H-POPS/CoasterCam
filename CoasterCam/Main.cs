@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using System.Reflection;
+using UnityEngine;
 
 namespace CoasterCam
 {
@@ -40,8 +42,27 @@ namespace CoasterCam
             InputManager.Instance.registerKeyMapping(key);
         }
 
-        public string Name { get { return "CoasterCam"; } }
-        public string Description { get { return "Camera for riding coasters"; } }
-        public string Identifier { get { return "H-POPS@CoasterCam"; } }
+
+        public string Name => name;
+        public string Description => description;
+        public string Identifier => identifier;
+
+        private static string name, description, identifier;
+        static Main()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+
+            var meta =
+                assembly.GetCustomAttributes(typeof(AssemblyMetadataAttribute), false)
+                .Cast<AssemblyMetadataAttribute>()
+                .Single(a => a.Key == "Identifier");
+            identifier = meta.Value;
+
+            T GetAssemblyAttribute<T>() where T : System.Attribute => (T) assembly.GetCustomAttribute(typeof(T));
+
+            name = GetAssemblyAttribute<AssemblyTitleAttribute>().Title;
+            description = GetAssemblyAttribute<AssemblyDescriptionAttribute>().Description;
+        }
+
     }
 }
