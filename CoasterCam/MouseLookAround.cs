@@ -22,6 +22,12 @@ namespace CoasterCam
 
         void Update()
         {
+            // only move if right mouse button is pressed
+            if(!Input.GetMouseButton(1))
+            {
+                return;
+            }
+
             if (Axes == RotationAxes.MouseXAndY)
             {
                 float rotationX = transform.localEulerAngles.y + Input.GetAxis("Mouse X") * _sensitivityX;
