@@ -26,12 +26,20 @@
 
     <!-- If true: execute Parkitect.exe after build. For single build: dotnet build /p:StartParkitect=true -->
     <StartParkitect>false</StartParkitect>
+    <!-- Starts Parkitect via steam. $(SteamExe) must be specified! -->
+    <!-- Another advantage of starting via steam: otherwise msbuild waits for Parkitect to close -->
+    <UseSteam>false</UseSteam>
   </PropertyGroup>
 
   <PropertyGroup>
     <!-- Different on each system -->
     <ParkitectPath>E:\Downloads\games\Humble Bundle\games\Parkitect\Parkitect_Beta_11_64bit</ParkitectPath>
     <ParkitectUserPath>E:\Documents\Parkitect</ParkitectUserPath>
+    <SteamExe>D:\Games\Steam\Steam.exe</SteamExe>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ParkitectSteamId>453090</ParkitectSteamId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -238,6 +246,7 @@
     <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(ModDir)/$(TargetFileName)" />
   </Target>
   <Target Name="StartParkitect" AfterTargets="PostBuild" Condition="'$(StartParkitect)' == 'true'">
-    <Exec Command='"$(ParkitectPath)/Parkitect"' />
+    <Exec Condition="'$(UseSteam)' != 'true'" Command='"$(ParkitectPath)/Parkitect"' />
+    <Exec Condition="'$(UseSteam)' == 'true'" Command='"$(SteamExe)" -applaunch $(ParkitectSteamId)' />
   </Target>
 </Project>
