@@ -25,7 +25,7 @@ namespace CoasterCam
             if (Axes == RotationAxes.MouseXAndY)
             {
                 float rotationX = transform.localEulerAngles.y + Input.GetAxis("Mouse X") * _sensitivityX;
-                
+
                 _rotationY += Input.GetAxis("Mouse Y") * _sensitivityY;
                 _rotationY = Mathf.Clamp(_rotationY, _minimumY, _maximumY);
 
@@ -43,5 +43,26 @@ namespace CoasterCam
                 transform.localEulerAngles = new Vector3(-_rotationY, transform.localEulerAngles.y, 0);
             }
         }
+
+        private IMouseTool _disableMouseTool;
+
+        void OnEnable()
+        {
+            _disableMouseTool = new DisableMouseInteractionMouseTool();
+            GameController.Instance.enableMouseTool(_disableMouseTool);
+        }
+        void OnDisable()
+        {
+            GameController.Instance.removeMouseTool(_disableMouseTool);
+        }
+        private class DisableMouseInteractionMouseTool : AbstractMouseTool
+        {
+            public override bool canEscapeMouseTool() => false;
+
+            public override GameController.GameFeature getDisallowedFeatures()
+                =>  GameController.GameFeature.Picking
+                    | GameController.GameFeature.Delete
+                    | GameController.GameFeature.DragDelete;
+    }
     }
 }
