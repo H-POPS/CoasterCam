@@ -48,6 +48,8 @@ namespace CoasterCam
         public string Identifier => identifier;
 
         private static string name, description, identifier;
+
+
         static Main()
         {
             var assembly = Assembly.GetExecutingAssembly();
@@ -63,6 +65,5 @@ namespace CoasterCam
             name = GetAssemblyAttribute<AssemblyTitleAttribute>().Title;
             description = GetAssemblyAttribute<AssemblyDescriptionAttribute>().Description;
         }
-
     }
 }

@@ -7,47 +7,72 @@ namespace CoasterCam
 {
     internal class CoasterCam : MonoBehaviour
     {
-        private GameObject _coasterCam;
-        private GameObject _origCam;
-
-        private bool _isOnRide;
-        
         public static CoasterCam Instance;
-        
-        private float _origShadowDist;
-        private int _origQualityLevel;
-        private int _origResoWidth;
-        private int _origResoHeight;
 
-        private Camera _cam;
-        
-        float _fps;
-       
         private readonly List<Transform> _seats = new List<Transform>();
 
+        private Camera _cam;
+
+        private Coaster _coaster;
+        private GameObject _coasterCam;
+
+        private GameObject _currentSeat;
+
+        private float _fps;
+
+        private bool _isOnRide;
+        private readonly float _maximumX = 60F;
+        private readonly float _maximumY = 40F;
+
+
+        private readonly float _minimumX = -60F;
+        private readonly float _minimumY = -40F;
+        private GameObject _origCam;
+        private int _origQualityLevel;
+        private int _origResoHeight;
+        private int _origResoWidth;
+
+        private float _origShadowDist;
+        private Transform _parent;
+        private Transform _head;
+
         private int _seatIndex;
+
+
+        private List<Tuple<string, Vector3, Vector3>> _views = new List<Tuple<string, Vector3, Vector3>>()
+        {
+            new Tuple<string, Vector3, Vector3>("First person", Vector3.zero, Vector3.zero),
+            new Tuple<string, Vector3, Vector3>("Third person", new Vector3(0, .39f, -1.35f), new Vector3(20,0,0)),
+            new Tuple<string, Vector3, Vector3>("Front person", new Vector3(0, -.15f, 1.35f), new Vector3(0,180,0)),
+        };
+
+        private int _currentView;
 
         private void Awake()
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-		}
+        }
 
         private KeyCode GetEnterKeyCode()
         {
             return Settings.Instance.getKeyMapping(gameObject.name + "/enter");
         }
-		
-		private void Update()
+
+        private void Update()
         {
-            if (Input.GetKeyUp(GetEnterKeyCode()) && !_isOnRide && !UIUtility.isInputFieldFocused()) {
-	            var ride = Utility.getObjectBelowMouse().hitObject;
 
-	            Attraction attr = ride.gameObject.GetComponentInChildren<Attraction>();
 
-	            if (attr == null) {
-		            attr = ride.gameObject.GetComponentInParent<Attraction>();
-	            }
+            if (Input.GetKeyUp(GetEnterKeyCode()) && !_isOnRide && !UIUtility.isInputFieldFocused())
+            {
+                var ride = Utility.getObjectBelowMouse().hitObject;
+
+                var attr = ride.gameObject.GetComponentInChildren<Attraction>();
+
+                if (attr == null) attr = ride.gameObject.GetComponentInParent<Attraction>();
+
+                _coaster = attr as Coaster;
+
 
                 if (attr != null)
                 {
@@ -55,6 +80,8 @@ namespace CoasterCam
                     _seatIndex = 0;
 
                     Utility.recursiveFindTransformsStartingWith("seat", attr.transform, _seats);
+
+
 
                     if (_seats.Count > 0)
                         EnterCoasterCam(_seats[_seatIndex].gameObject);
@@ -65,6 +92,22 @@ namespace CoasterCam
                 LeaveCoasterCam();
             }
 
+
+            if ((Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.D)) && _isOnRide)
+            {
+                LeaveCoasterCam();
+
+                if (Input.GetKeyUp(KeyCode.D) )
+                    if (++_currentView == _views.Count)
+                        _currentView = 0;
+
+                if (Input.GetKeyUp(KeyCode.A))
+                    if (--_currentView < 0)
+                        _currentView = _views.Count - 1;
+
+                EnterCoasterCam(_seats[_seatIndex].gameObject);
+            }
+
             if (_isOnRide)
             {
                 if (Math.Abs(Input.GetAxis("Mouse ScrollWheel")) > 0.1)
@@ -72,16 +115,12 @@ namespace CoasterCam
                     LeaveCoasterCam();
 
                     if (Input.GetAxis("Mouse ScrollWheel") > 0)
-                    {
                         if (++_seatIndex == _seats.Count)
                             _seatIndex = 0;
-                    }
-                    
+
                     if (Input.GetAxis("Mouse ScrollWheel") < 0)
-                    {
                         if (--_seatIndex < 0)
                             _seatIndex = _seats.Count - 1;
-                    }
 
                     EnterCoasterCam(_seats[_seatIndex].gameObject);
                 }
@@ -90,20 +129,57 @@ namespace CoasterCam
             }
         }
 
+        private void FixedUpdate()
+        {
+            if (Input.GetMouseButton(1))
+            {
+                return;
+            }
+            if (_isOnRide && _seatIndex < 2)
+            {
+                //_head.transform.position = _currentSeat.transform.position + _currentSeat.transform.up * 0.35f +
+                //                                 _currentSeat.transform.forward * 0.1f;
+                if (_coaster != null)
+                {
+                    var point1 = _coaster.Track.getPoint(_coaster.Track.trains[0].currentTrackPosition);
+                    var lookAtPosition = _coaster.Track.trains[0].currentTrackPosition + 1.5f + _coaster.Track.trains[0].velocity / 30;
+                    var point2 = _coaster.Track.getPoint(lookAtPosition);
+                    var oldRot = _head.transform.localEulerAngles;
+
+
+                    var xDir = Vector3.ProjectOnPlane(point2, _parent.up) - Vector3.ProjectOnPlane(point1, _parent.up);
+                    var rotationX = -Vector3.SignedAngle(xDir, _parent.forward, _parent.up) / 2f;
+                    if (Mathf.Abs(rotationX) > _maximumX + 10)
+                        rotationX = 0;
+                    rotationX = Mathf.Clamp(rotationX, _minimumX, _maximumX);
+
+                    rotationX = Mathf.LerpAngle(oldRot.y, rotationX, Time.deltaTime * 2f + Time.deltaTime * _coaster.Track.trains[0].velocity / 20);
+
+                    var yDir = Vector3.ProjectOnPlane(point2, _parent.right) -
+                               Vector3.ProjectOnPlane(point1, _parent.right);
+                    var rotationY = -Vector3.SignedAngle(yDir, _parent.forward, _parent.right) / 2f;
+                    if (Mathf.Abs(rotationY) > _maximumY + 10)
+                        rotationY = 0;
+                    rotationY = Mathf.Clamp(rotationY, _minimumY, _maximumY);
+                    rotationY = Mathf.LerpAngle(oldRot.x, rotationY, Time.deltaTime * 2f + Time.deltaTime * _coaster.Track.trains[0].velocity / 20);
+
+                    var rot = new Vector3(rotationY, rotationX, 0);
+                    _head.transform.localEulerAngles = rot;
+                }
+            }
+        }
+
+
         private void AdaptFarClipPaneToFps()
         {
             _fps = 1.0f / Time.deltaTime;
 
-            if (_fps < 50)
-            {
-                _cam.farClipPlane = Math.Max(40, _cam.farClipPlane - 0.3f);
-            }
+            if (_fps < 50) _cam.farClipPlane = Math.Max(30, _cam.farClipPlane - 0.3f);
 
-            if (_fps > 55)
-            {
-                _cam.farClipPlane = Math.Min(120, _cam.farClipPlane + 0.2f);
-            }
+            if (_fps > 55) _cam.farClipPlane = Math.Min(120, _cam.farClipPlane + 0.2f);
         }
+
+
 
         public void EnterCoasterCam(GameObject onGo)
         {
@@ -112,7 +188,7 @@ namespace CoasterCam
 
             UIWorldOverlayController.Instance.gameObject.SetActive(false);
 
-            string tag = Camera.main.tag;
+            var tag = Camera.main.tag;
 
             _origCam = Camera.main.gameObject;
 
@@ -124,10 +200,10 @@ namespace CoasterCam
             _coasterCam.tag = tag;
             DestroyImmediate(_coasterCam.GetComponent<CameraController>());
 
-            GameObject go = new GameObject();
-            Camera cam2 = go.AddComponent<Camera>();
+            var go = new GameObject();
+            var cam2 = go.AddComponent<Camera>();
 
-            Camera cam = _coasterCam.GetComponent<Camera>();
+            var cam = _coasterCam.GetComponent<Camera>();
 
             /**
             * Ugliest code of all time, but hey, it works!
@@ -159,26 +235,37 @@ namespace CoasterCam
             DestroyImmediate(go);
 
             CullingGroupManager.Instance.setTargetCamera(_coasterCam.GetComponent<Camera>());
-			_coasterCam.GetComponent<Camera>().nearClipPlane = 0.05f;
+            _coasterCam.GetComponent<Camera>().nearClipPlane = 0.05f;
             _coasterCam.GetComponent<Camera>().farClipPlane = 100f;
             _coasterCam.GetComponent<Camera>().depthTextureMode = DepthTextureMode.DepthNormals;
 
             _coasterCam.AddComponent<AudioListener>();
 
-            _coasterCam.transform.parent = onGo.transform;
-            _coasterCam.transform.localPosition = new Vector3(0, 0.35f, 0.1f);
-            _coasterCam.transform.localRotation = Quaternion.identity;
+            _currentSeat = onGo;
 
-            _coasterCam.AddComponent<MouseLookAround>();
+            _parent = new GameObject().transform;
+            _parent.parent = onGo.transform;
+            _parent.localPosition = new Vector3(0, 0.35f, 0.1f);
+            _parent.localRotation = Quaternion.identity;
+
+            _head = new GameObject().transform;
+            _head.parent = _parent;
+            _head.localPosition = Vector3.zero;
+            _head.localRotation = Quaternion.identity;
+
+            _coasterCam.transform.parent = _head;
+            _coasterCam.transform.localPosition = _views[_currentView].Item2;
+            _coasterCam.transform.localEulerAngles = _views[_currentView].Item3;
+
+
+            _head.gameObject.AddComponent<MouseLookAround>();
 
             _cam = _coasterCam.GetComponent<Camera>();
-            
+
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
 
             _isOnRide = true;
-
-            //InputTracking.Recenter();
         }
 
         public void LeaveCoasterCam()
@@ -186,10 +273,11 @@ namespace CoasterCam
             if (!_isOnRide)
                 return;
             
+            Destroy(_head.gameObject);
             _origCam.SetActive(true);
-			CullingGroupManager.Instance.setTargetCamera(_origCam.GetComponent<Camera>());
-
-			Destroy(_coasterCam);
+            CullingGroupManager.Instance.setTargetCamera(_origCam.GetComponent<Camera>());
+            
+            GameController.Instance.cameraController = _origCam.GetComponent<CameraController>();
 
             UIWorldOverlayController.Instance.gameObject.SetActive(true);
 
@@ -197,11 +285,8 @@ namespace CoasterCam
             Cursor.visible = true;
 
             _isOnRide = false;
-        }
 
-        void OnDestroy()
-        {
-            LeaveCoasterCam();
+            
         }
     }
 }

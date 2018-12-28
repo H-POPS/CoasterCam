@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net45</TargetFramework>
@@ -25,17 +25,17 @@
     <Company>ParkitectNexus</Company>
 
     <!-- If true: execute Parkitect.exe after build. For single build: dotnet build /p:StartParkitect=true -->
-    <StartParkitect>false</StartParkitect>
+    <StartParkitect>true</StartParkitect>
     <!-- Starts Parkitect via steam. $(SteamExe) must be specified! -->
     <!-- Another advantage of starting via steam: otherwise msbuild waits for Parkitect to close -->
-    <UseSteam>false</UseSteam>
+    <UseSteam>true</UseSteam>
   </PropertyGroup>
 
   <PropertyGroup>
     <!-- Different on each system -->
-    <ParkitectPath>E:\Downloads\games\Humble Bundle\games\Parkitect\Parkitect_Beta_11_64bit</ParkitectPath>
-    <ParkitectUserPath>E:\Documents\Parkitect</ParkitectUserPath>
-    <SteamExe>D:\Games\Steam\Steam.exe</SteamExe>
+    <ParkitectPath>D:\Games\steamapps\common\Parkitect</ParkitectPath>
+    <ParkitectUserPath>C:\Users\Henrico\Documents\Parkitect</ParkitectUserPath>
+    <SteamExe>C:\Games\Steam\Steam.exe</SteamExe>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -241,12 +241,14 @@
   </PropertyGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <RemoveDir Directories="$(ModDir)" />
+    <Delete Files="$(ModDir)/$(TargetFileName)" />
     <MakeDir Directories="$(ModDir)" />
     <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(ModDir)/$(TargetFileName)" />
+    <Delete Files="$(ModDir).zip" />
+    <Exec Condition="$(ConfigurationName) == 'Release'"  Command="7z a -r &quot;$(ModDir).zip&quot; &quot;$(ModDir)&quot;" />
   </Target>
   <Target Name="StartParkitect" AfterTargets="PostBuild" Condition="'$(StartParkitect)' == 'true'">
-    <Exec Condition="'$(UseSteam)' != 'true'" Command='"$(ParkitectPath)/Parkitect"' />
-    <Exec Condition="'$(UseSteam)' == 'true'" Command='"$(SteamExe)" -applaunch $(ParkitectSteamId)' />
+    <Exec Condition="'$(UseSteam)' != 'true'" Command="&quot;$(ParkitectPath)/Parkitect&quot;" />
+    <Exec Condition="'$(UseSteam)' == 'true'" Command="&quot;$(SteamExe)&quot; -applaunch $(ParkitectSteamId)" />
   </Target>
 </Project>

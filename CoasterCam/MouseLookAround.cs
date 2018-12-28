@@ -19,6 +19,7 @@ namespace CoasterCam
         private float _maximumY = 60F;
 
         private float _rotationY;
+        private IMouseTool _originalMouseTool;
 
         void Update()
         {
@@ -55,10 +56,12 @@ namespace CoasterCam
         void OnEnable()
         {
             _disableMouseTool = new DisableMouseInteractionMouseTool();
+            _originalMouseTool = GameController.Instance.getActiveMouseTool();
             GameController.Instance.enableMouseTool(_disableMouseTool);
         }
         void OnDisable()
         {
+            GameController.Instance.enableMouseTool(_originalMouseTool);
             GameController.Instance.removeMouseTool(_disableMouseTool);
         }
         private class DisableMouseInteractionMouseTool : AbstractMouseTool
