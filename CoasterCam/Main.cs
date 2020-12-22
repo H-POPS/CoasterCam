@@ -4,34 +4,41 @@ using UnityEngine;
 
 namespace CoasterCam
 {
-    public class Main : IMod
-    {
+    public class Main : AbstractMod
+  {
         private static GameObject go;
+
+        public override string getName() => "CoasterCam";
+        public override string getDescription() => "Camera for riding coasters";
+        public override string getVersionNumber() => "1.0.1";
+        public override string getIdentifier() => "H-POPS@CoasterCam";
+        public override bool isMultiplayerModeCompatible() => true;
+        public override bool isRequiredByAllPlayersInMultiplayerMode() => false;
+
 
         public Main()
         {
             SetupKeyBinding();
         }
 
-        public void onEnabled()
+        public override void onEnabled()
         {
 
-            go = new GameObject(Identifier);
-
+            go = new GameObject(getIdentifier());
             go.AddComponent<CoasterCam>();
         }
 
-        public void onDisabled()
+        public override void onDisabled()
         {
             Object.Destroy(go);
         }
 
         private void SetupKeyBinding()
         {
-            KeyGroup group = new KeyGroup(Identifier);
-            KeyMapping key = new KeyMapping(Identifier + "/enter", KeyCode.R, KeyCode.None);
+            KeyGroup group = new KeyGroup(getIdentifier());
+            KeyMapping key = new KeyMapping(getIdentifier() + "/enter", KeyCode.R, KeyCode.None);
 
-            key.keyGroupIdentifier = Identifier;
+            key.keyGroupIdentifier = getIdentifier();
 
             group.keyGroupName = "CoasterCam";
 
@@ -40,30 +47,6 @@ namespace CoasterCam
 
             InputManager.Instance.registerKeyGroup(group);
             InputManager.Instance.registerKeyMapping(key);
-        }
-
-
-        public string Name => name;
-        public string Description => description;
-        public string Identifier => identifier;
-
-        private static string name, description, identifier;
-
-
-        static Main()
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-
-            var meta =
-                assembly.GetCustomAttributes(typeof(AssemblyMetadataAttribute), false)
-                .Cast<AssemblyMetadataAttribute>()
-                .Single(a => a.Key == "Identifier");
-            identifier = meta.Value;
-
-            T GetAssemblyAttribute<T>() where T : System.Attribute => (T) assembly.GetCustomAttribute(typeof(T));
-
-            name = GetAssemblyAttribute<AssemblyTitleAttribute>().Title;
-            description = GetAssemblyAttribute<AssemblyDescriptionAttribute>().Description;
         }
     }
 }
