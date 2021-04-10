@@ -62,6 +62,9 @@
     <Reference Include="UnityEngine.AudioModule">
       <HintPath>$(ParkitectPath)/Parkitect_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(ParkitectPath)/Parkitect_Data\Managed\UnityEngine.UI.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>$(ParkitectPath)/Parkitect_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
     </Reference>

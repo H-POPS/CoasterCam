@@ -1,9 +1,12 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using Moona;
 using Parkitect.UI;
 using UnityEngine;
+using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace CoasterCam
 {
@@ -62,6 +65,52 @@ namespace CoasterCam
             return Settings.Instance.getKeyMapping(gameObject.name + "/enter");
         }
 
+        private bool TryRidingAttraction(Attraction attr)
+        {
+            _coaster = attr as Coaster;
+            if (attr == null)
+                return false;
+
+            _seats.Clear();
+            _seatIndex = 0;
+
+            Utility.recursiveFindTransformsStartingWith("seat", attr.transform, _seats);
+
+            if (_seats.Count <= 0) return false;
+
+            EnterCoasterCam(_seats[_seatIndex].gameObject);
+            return true;
+        }
+
+        public void OnWindowOpened(UIWindowFrame windowFrame)
+        {
+            if (windowFrame.windowContent is not AttractionInfoWindow window) return;
+            var button = Object.Instantiate(ScriptableSingleton<UIAssetManager>.Instance.titlebarRenameButtonGO);
+            foreach (Transform child in button.transform)
+            {
+                Destroy(child.gameObject);
+            }
+
+            var text = new GameObject().AddComponent<Text>();
+            text.transform.parent = button.transform;
+            text.text = "CoasterCam";
+            windowFrame.addTitlebarButtonRight(button.gameObject);
+            windowFrame.addTitlebarButtonRight(button.gameObject);
+            button.onClick.AddListener(() =>
+            {
+                var getObjectMethod =
+                    typeof(AttractionInfoWindow).GetMethod(
+                        "getObject",
+                        BindingFlags.Instance | BindingFlags.NonPublic);
+                var obj = getObjectMethod.Invoke(window, new object[] { });
+                var attr = obj as Attraction;
+                if(TryRidingAttraction(attr))
+                {
+                     windowFrame.close();
+                }
+            });
+        }
+        
         private void Update()
         {
             if (Input.GetKeyUp(GetEnterKeyCode()) && !_isOnRide && !UIUtility.isInputFieldFocused())
@@ -69,29 +118,14 @@ namespace CoasterCam
                 var ride = Utility.getObjectBelowMouse().hitObject;
 
                 var attr = ride.gameObject.GetComponentInChildren<Attraction>();
-
                 if (attr == null) attr = ride.gameObject.GetComponentInParent<Attraction>();
+                TryRidingAttraction(attr);
 
-                _coaster = attr as Coaster;
-
-
-                if (attr != null)
-                {
-                    _seats.Clear();
-                    _seatIndex = 0;
-
-                    Utility.recursiveFindTransformsStartingWith("seat", attr.transform, _seats);
-
-
-                    if (_seats.Count > 0)
-                        EnterCoasterCam(_seats[_seatIndex].gameObject);
-                }
             }
             else if (Input.GetKeyUp(GetEnterKeyCode()) || Input.GetKeyDown(KeyCode.Escape))
             {
                 LeaveCoasterCam();
             }
-
 
             if ((Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.D)) && _isOnRide)
             {
